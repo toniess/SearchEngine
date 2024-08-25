@@ -3,12 +3,12 @@ cmake_minimum_required(VERSION 3.20)
 
 add_executable(SpiderApp
 	main.cpp
-        http_utils.h http_utils.cpp
+        utils.h utils.cpp
 	link.h
         ini_config.h
         database_manager.h
         spider.h spider.cpp
-        logger.h logger.cpp
+        logger.h
 	)
 
 target_compile_features(SpiderApp PRIVATE cxx_std_17) 

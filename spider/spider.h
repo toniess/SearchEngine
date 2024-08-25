@@ -14,7 +14,7 @@
 class Spider
 {
 public:
-    Spider(DatabaseManager&&);
+    Spider(DatabaseManager&);
     bool startWithCompletion(Link link, int depth);
 
 
@@ -23,12 +23,16 @@ private:
     void threadPoolWorker();
 
 private:
-    DatabaseManager m_db;
+    DatabaseManager& m_db;
 
     std::mutex mtx;
     std::condition_variable cv;
     std::queue<std::function<void()>> tasks;
     bool exitThreadPool = false;
+
+    std::set<Link> uniqueLinks;
+
+    int indexedSites = 0;
 
 };
 

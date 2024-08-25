@@ -1,15 +1,18 @@
 #include "spider.h"
-#include "http_utils.h"
+#include "utils.h"
 
 
-Spider::Spider(DatabaseManager&& db) : m_db(std::move(db))
+Spider::Spider(DatabaseManager& db) : m_db(db)
 {
+    m_db.dropTables();
     m_db.createTables();
 }
 
 bool Spider::startWithCompletion(Link link, int depth)
 {
     Logger::instance().log("Spider::startWithCompletion");
+    auto start = std::chrono::high_resolution_clock::now();
+
     try {
         int numThreads = std::thread::hardware_concurrency();
         std::vector<std::thread> threadPool;
@@ -36,11 +39,17 @@ bool Spider::startWithCompletion(Link link, int depth)
             t.join();
         }
 
+        Logger::instance().log("Spider has finished work");
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        Logger::instance().log("Elapsed time: " + std::to_string(elapsed.count())
+                               + " seconds. Indexed sites: " + std::to_string(indexedSites));
+
         return true;
     }
     catch (const std::exception& e)
     {
-        std::cout << e.what() << std::endl;
+        Logger::instance().log(e.what());
         return false;
     }
 }
@@ -48,33 +57,28 @@ bool Spider::startWithCompletion(Link link, int depth)
 void Spider::parseLink(const Link &link, int depth)
 {
     try {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
+        Logger::instance().log("Processing link " + link.toString());
         std::string html = getHtmlContent(link);
 
         if (html.size() == 0)
         {
-            std::cout << "Failed to get HTML Content" << std::endl;
+            Logger::instance().log("Failed to get HTML Content");
             return;
         }
 
-        // TODO: Parse HTML code here on your own
 
-        std::cout << "html content:" << std::endl;
-        std::cout << html << std::endl;
+        auto wordsCount = countWordFrequency(html);
+        if (m_db.loadSiteIndex(wordsCount, link))
+            indexedSites++;
 
-        // TODO: Collect more links from HTML code and add them to the parser like that:
-
-        std::vector<Link> links = {
-                                   {ProtocolType::HTTPS, "en.wikipedia.org", "/wiki/Wikipedia"},
-                                   {ProtocolType::HTTPS, "wikimediafoundation.org", "/"},
-                                   };
+        std::vector<Link> internalLinks = extract_links(html);
+        std::vector<Link> links = get_new_unique_links(internalLinks, uniqueLinks);
 
         if (depth > 0) {
             std::lock_guard<std::mutex> lock(mtx);
 
-            size_t count = links.size();
             size_t index = 0;
             for (auto& subLink : links)
             {
@@ -85,7 +89,7 @@ void Spider::parseLink(const Link &link, int depth)
     }
     catch (const std::exception& e)
     {
-        std::cout << e.what() << std::endl;
+        Logger::instance().log(e.what());
     }
 
 }

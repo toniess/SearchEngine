@@ -3,7 +3,8 @@
 
 #include "ini_config.h"
 #include <pqxx/pqxx>
-#include "logger.h";
+#include "link.h"
+#include "logger.h"
 
 class DatabaseManager
 {
@@ -47,8 +48,39 @@ public:
         Logger::instance().log("DatabaseManager create tables success");
     }
 
+    bool loadSiteIndex(std::unordered_map<std::string, int> &m, const Link& l) {
+        Logger::instance().log("DatabaseManager uploading data...");
+        m_mutex.lock();
+        try {
+            pqxx::work w{ *m_connection };
+
+            pqxx::result r = w.exec("INSERT INTO ref (host, path) VALUES (" +
+                                     w.quote(l.hostName) + ", " + w.quote(l.query) + ") RETURNING id");
+            int ref_id = r[0][0].as<int>();
+
+            for (const auto& [word, count] : m) {
+                w.exec("INSERT INTO data (reference_id, word, count) VALUES (" +
+                       w.quote(ref_id) + ", " + w.quote(word) + ", " + w.quote(count) + ")");
+            }
+
+            w.commit();
+            Logger::instance().log("DatabaseManager uploading data success");
+            m_mutex.unlock();
+            return true;
+        } catch (const pqxx::sql_error& e) {
+            Logger::instance().log(std::string("DatabaseManager uploading data failed. SQL error: ") + e.what()
+                                   + std::string("Query was: ") + e.query());
+        } catch (const std::exception& e) {
+            Logger::instance().log(std::string("DatabaseManager uploading data failed. Error: ") + e.what());
+        }
+        m_mutex.unlock();
+        return false;
+    }
+
+
 private:
     pqxx::connection* m_connection;
+    std::mutex m_mutex;
 
 };
 

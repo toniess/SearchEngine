@@ -7,12 +7,13 @@
 
 int main()
 {
-    //SetConsoleOutputCP(1251);
+    SetConsoleOutputCP(1251);
 
     try {
         Logger::instance().setTag("[SpiderApp]");
         IniConfig conf("config.ini");
-        Spider spider(conf);
+        DatabaseManager db(conf);
+        Spider spider(db);
         Link startLink = {  ProtocolType::HTTPS
                           , conf.get<std::string>("spider.start_point")
                           , conf.get<std::string>("spider.path")    };

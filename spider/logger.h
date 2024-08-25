@@ -2,16 +2,16 @@
 #define LOGGER_H
 
 #include <iostream>
+#include <map>
+#include <mutex>
 #include <string>
 #include <boost/locale.hpp>
 
 class Logger {
 public:
     static Logger& instance() {
-        if (!s_instance) {
-            s_instance = new Logger();
-        }
-        return *s_instance;
+        static Logger instance;
+        return instance;
     }
 
     void setTag(std::string&& tag) {
@@ -19,7 +19,13 @@ public:
     }
 
     void log(std::string log) {
-        std::cout << m_tag + ": " + log + "\n";
+        logMutex.lock();
+        system("cls");
+        threadLogs[std::this_thread::get_id()] = m_tag + ": " + log + "\n";
+        for (auto&& [threadId, log] : threadLogs) {
+            std::cout << "thread_" << threadId << " " + log;
+        }
+        logMutex.unlock();
     }
 
 private:
@@ -32,7 +38,8 @@ private:
 
 private:
     std::string m_tag;
-    static Logger* s_instance;
+    std::mutex logMutex;
+    std::map<std::thread::id, std::string> threadLogs;
 };
 
 #endif // LOGGER_H
