@@ -6,6 +6,7 @@
 #include "link.h"
 #include "logger.h"
 
+
 class DatabaseManager
 {
 public:
@@ -83,6 +84,5 @@ private:
     std::mutex m_mutex;
 
 };
-
 
 #endif // DATABASE_MANAGER_H

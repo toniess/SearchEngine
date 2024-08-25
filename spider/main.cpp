@@ -1,4 +1,3 @@
-#include <iostream>
 #include "ini_config.h"
 #include "logger.h"
 #include "spider.h"
@@ -21,10 +20,10 @@ int main()
         spider.startWithCompletion(startLink, depth);
     }
     catch (const std::string& e) {
-        std::cout << e << std::endl;
+        Logger::instance().log(e);
     }
     catch (const std::exception& e) {
-        std::cout << e.what() << std::endl;
+        Logger::instance().log(e.what());
     }
 
     return 0;

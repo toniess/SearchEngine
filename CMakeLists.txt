@@ -29,6 +29,8 @@ add_subdirectory(${libpqxx_DIR} libpqxx-build)
 # OpenSSL
 find_package(OpenSSL REQUIRED)
 
+add_subdirectory(SearchEngineLib)
+
 add_subdirectory(http_server)
 
 add_subdirectory(spider)

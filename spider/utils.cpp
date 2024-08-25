@@ -231,7 +231,7 @@ std::string toLower(const std::string& input) {
     return converter.to_bytes(woutput);
 }
 
-std::unordered_map<std::string, int> countWordFrequency(std::string text) {
+std::unordered_map<std::string, int> countWordFrequency(std::string text, int minLength, int maxLength) {
     Logger::instance().log("Indexing site...");
     std::unordered_map<std::string, int> wordCount;
 
@@ -248,7 +248,7 @@ std::unordered_map<std::string, int> countWordFrequency(std::string text) {
     std::string word;
 
     while (stream >> word) {
-        if (!word.empty()) {
+        if (!word.empty() && word.length() >= minLength && word.length() <= maxLength) {
             word = toLower(word);
             ++wordCount[word];
         }
