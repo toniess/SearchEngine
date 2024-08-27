@@ -1,4 +1,5 @@
 #include "http_connection.h"
+#include "database_manager.h"
 
 #include <sstream>
 #include <iostream>
@@ -34,8 +35,8 @@ std::string convert_to_utf8(const std::string& str) {
 	return url_decoded;
 }
 
-HttpConnection::HttpConnection(tcp::socket socket)
-	: socket_(std::move(socket))
+HttpConnection::HttpConnection(tcp::socket socket, IniConfig &conf)
+    : socket_(std::move(socket)), db_(conf)
 {
 }
 
@@ -129,7 +130,7 @@ void HttpConnection::createResponsePost()
 	{
 		std::string s = buffers_to_string(request_.body().data());
 
-		std::cout << "POST data: " << s << std::endl;
+        Logger::instance().log("POST data: " + s);
 
 		size_t pos = s.find('=');
 		if (pos == std::string::npos)
@@ -153,13 +154,7 @@ void HttpConnection::createResponsePost()
 			return;
 		}
 
-		// TODO: Fetch your own search results here
-
-		std::vector<std::string> searchResult = {
-			"https://en.wikipedia.org/wiki/Main_Page",
-			"https://en.wikipedia.org/wiki/Wikipedia",
-		};
-
+        std::vector<std::string> searchResult = db_.search(utf8value, 10);
 
 		response_.set(http::field::content_type, "text/html");
 		beast::ostream(response_.body())

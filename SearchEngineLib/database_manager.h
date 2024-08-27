@@ -78,6 +78,61 @@ public:
         return false;
     }
 
+    std::vector<std::string> search(std::string query, int limit) {
+        pqxx::work w{ *m_connection };
+
+        std::vector<std::string> words = split_string(query, '+');
+
+        std::ostringstream sql;
+        sql << "SELECT r.host, r.path, SUM(d.count) AS total_count "
+            << "FROM ref r "
+            << "JOIN data d ON r.id = d.reference_id "
+            << "WHERE d.word IN (";
+
+        for (size_t i = 0; i < words.size(); ++i) {
+            if (i > 0) sql << ", ";
+            sql << w.quote(words[i]);
+        }
+        sql << ") "
+            << "GROUP BY r.host, r.path "
+            << "ORDER BY total_count DESC "
+            << "LIMIT "
+            << limit;
+
+        Logger::instance().log(std::string("processing query: ") + sql.str());
+        pqxx::result result = w.exec(sql.str());
+        w.commit();
+
+        std::vector<std::string> results;
+        for (const auto& row : result) {
+            results.emplace_back(std::string("https://") + row[0].c_str() + std::string("/") + row[1].c_str());
+            Logger::instance().log(results.back());
+        }
+
+
+
+        return results;
+    }
+
+    ~DatabaseManager() {
+        m_connection->close();
+        delete m_connection;
+    }
+
+private:
+
+    std::vector<std::string> split_string(const std::string& s, char delimiter = ' ') {
+        std::vector<std::string> words;
+        std::istringstream stream(s);
+        std::string word;
+        while (std::getline(stream, word, delimiter)) {
+            if (!word.empty()) {
+                words.push_back(word);
+            }
+        }
+        return words;
+    }
+
 
 private:
     pqxx::connection* m_connection;

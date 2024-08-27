@@ -14,18 +14,26 @@ public:
         return instance;
     }
 
+    void setThreadLog(bool state) {
+        threadLogEnabled = state;
+    }
+
     void setTag(std::string&& tag) {
         m_tag = std::move(tag);
     }
 
     void log(std::string log) {
-        logMutex.lock();
-        system("cls");
-        threadLogs[std::this_thread::get_id()] = m_tag + ": " + log + "\n";
-        for (auto&& [threadId, log] : threadLogs) {
-            std::cout << "thread_" << threadId << " " + log;
+        if (threadLogEnabled) {
+            logMutex.lock();
+            system("cls");
+            threadLogs[std::this_thread::get_id()] = m_tag + ": " + log + "\n";
+            for (auto&& [threadId, log] : threadLogs) {
+                std::cout << "thread_" << threadId << " " + log;
+            }
+            logMutex.unlock();
+        } else {
+            std::cout << m_tag + ": " + log + "\n";
         }
-        logMutex.unlock();
     }
 
 private:
@@ -40,6 +48,7 @@ private:
     std::string m_tag;
     std::mutex logMutex;
     std::map<std::thread::id, std::string> threadLogs;
+    bool threadLogEnabled = false;
 };
 
 #endif // LOGGER_H

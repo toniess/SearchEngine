@@ -4,6 +4,7 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio.hpp>
+#include "database_manager.h"
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -13,6 +14,8 @@ using tcp = boost::asio::ip::tcp;
 class HttpConnection : public std::enable_shared_from_this<HttpConnection>
 {
 protected:
+
+    DatabaseManager db_;
 
 	tcp::socket socket_;
 
@@ -36,7 +39,7 @@ protected:
 	void checkDeadline();
 
 public:
-	HttpConnection(tcp::socket socket);
+    HttpConnection(tcp::socket socket, IniConfig& conf);
 	void start();
 };
 

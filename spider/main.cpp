@@ -6,10 +6,13 @@
 
 int main()
 {
-    SetConsoleOutputCP(1251);
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
+
 
     try {
         Logger::instance().setTag("[SpiderApp]");
+        Logger::instance().setThreadLog(true);
         IniConfig conf("config.ini");
         DatabaseManager db(conf);
         Spider spider(db);

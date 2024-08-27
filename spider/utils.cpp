@@ -91,7 +91,7 @@ std::string getHtmlContent(const Link& link)
 			}
 			else
 			{
-				std::cout << "This is not a text link, bailing out..." << std::endl;
+                Logger::instance().log("This is not a text link, bailing out...");
 			}
 
 			beast::error_code ec;
@@ -133,7 +133,7 @@ std::string getHtmlContent(const Link& link)
 			}
 			else
 			{
-				std::cout << "This is not a text link, bailing out..." << std::endl;
+                Logger::instance().log("This is not a text link, bailing out...");
 			}
 
 			beast::error_code ec;
@@ -146,7 +146,7 @@ std::string getHtmlContent(const Link& link)
 	}
 	catch (const std::exception& e)
 	{
-		std::cout << e.what() << std::endl;
+        Logger::instance().log(e.what());
 	}
 
 	return result;
