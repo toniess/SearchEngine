@@ -158,11 +158,10 @@ ProtocolType parse_protocol(const std::string& protocol_str) {
     return ProtocolType::HTTPS;
 }
 
-Link parse_link(const std::string& url) {
+Link parse_link(const std::string& url, const std::string& base_url = "") {
     std::regex url_regex(R"((https?)://([^/]+)(.*))", std::regex::icase);
     std::smatch match;
 
-    // Check if the URL starts with http or https
     if (std::regex_match(url, match, url_regex)) {
         std::string protocol_str = match[1].str();
         std::string host_name = match[2].str();
@@ -171,6 +170,10 @@ Link parse_link(const std::string& url) {
         ProtocolType protocol = parse_protocol(protocol_str);
         return { protocol, host_name, query };
     } else {
+        if (url.empty()) {
+            throw std::invalid_argument("URL is empty");
+        }
+
         // Handle URLs without a specified protocol
         std::regex no_protocol_regex(R"(([^/]+)(.*))");
         if (std::regex_match(url, match, no_protocol_regex)) {
@@ -179,6 +182,13 @@ Link parse_link(const std::string& url) {
 
             // Default to HTTPS if no protocol is specified
             return { ProtocolType::HTTPS, host_name, query };
+        } else if (url[0] == '/') {
+            // Handle relative URLs
+            if (base_url.empty()) {
+                throw std::invalid_argument("Base URL is required for relative URLs");
+            }
+            std::string full_url = base_url + url;
+            return parse_link(full_url);
         } else {
             throw std::invalid_argument("Invalid URL format");
         }
@@ -186,20 +196,22 @@ Link parse_link(const std::string& url) {
 }
 
 
-std::vector<Link> extract_links(const std::string &html) {
+std::vector<Link> extract_links(const std::string &html, const std::string &base_url) {
     std::vector<Link> links;
 
     std::regex link_regex(R"(<a\s+(?:[^>]*?\s+)?href="([^"]*)\")", std::regex::icase);
-    auto links_begin = std::sregex_iterator(html.begin(), html.end(), link_regex);
+        auto links_begin = std::sregex_iterator(html.begin(), html.end(), link_regex);
     auto links_end = std::sregex_iterator();
 
     for (std::sregex_iterator i = links_begin; i != links_end; ++i) {
         std::smatch match = *i;
         std::string url = match[1].str();
         try {
-            links.push_back(parse_link(url));
+            auto link = parse_link(url, base_url);
+            links.push_back(link);
+            // Logger::instance().log("Get link: " + link.toString());
         } catch (const std::invalid_argument&) {
-            //Logger::instance().log("Ignoring invalid link: " + url);
+            // Logger::instance().log("Ignoring invalid link: " + url);
         }
     }
 

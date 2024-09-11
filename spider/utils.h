@@ -10,7 +10,7 @@
 
 std::string getHtmlContent(const Link& link);
 
-std::vector<Link> extract_links(const std::string& html);
+std::vector<Link> extract_links(const std::string& html, const std::string &base_url);
 
 std::vector<Link> get_new_unique_links(const std::vector<Link>& links, std::set<Link> &existing_links);
 

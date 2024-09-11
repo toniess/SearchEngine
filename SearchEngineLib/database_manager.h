@@ -83,6 +83,12 @@ public:
 
         std::vector<std::string> words = split_string(query, '+');
 
+        for (auto& word : words) {
+            for (auto& letter : word) {
+                letter = std::tolower(letter);
+            }
+        }
+
         std::ostringstream sql;
         sql << "SELECT r.host, r.path, SUM(d.count) AS total_count "
             << "FROM ref r "

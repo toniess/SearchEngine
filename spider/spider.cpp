@@ -73,7 +73,7 @@ void Spider::parseLink(const Link &link, int depth)
         if (m_db.loadSiteIndex(wordsCount, link))
             indexedSites++;
 
-        std::vector<Link> internalLinks = extract_links(html);
+        std::vector<Link> internalLinks = extract_links(html, link.toString());
         std::vector<Link> links = get_new_unique_links(internalLinks, uniqueLinks);
 
         if (depth > 0) {
